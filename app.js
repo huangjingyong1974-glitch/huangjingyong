@@ -44,6 +44,8 @@ let currentMode = "chat";
 let recognition = null;
 let lastTeacherBubble = null;
 let setupReady = false;
+let apiMode = null;
+let intentionalDisconnect = false;
 
 apiKeyInput.value = localStorage.getItem("geminiApiKey") || "";
 modelInput.value = localStorage.getItem("geminiModel") || modelInput.value;
@@ -87,6 +89,7 @@ function connectGemini() {
   localStorage.setItem("geminiApiKey", apiKey);
   localStorage.setItem("geminiModel", model);
   setConnection("连接中", true);
+  intentionalDisconnect = false;
 
   const url = `wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent?key=${encodeURIComponent(apiKey)}`;
   socket = new WebSocket(url);
@@ -96,8 +99,7 @@ function connectGemini() {
       JSON.stringify({
         config: {
           model: `models/${model}`,
-          responseModalities: ["AUDIO"],
-          outputAudioTranscription: {},
+          responseModalities: ["TEXT"],
           systemInstruction: {
             parts: [
               {
@@ -112,19 +114,34 @@ function connectGemini() {
   });
 
   socket.addEventListener("message", handleGeminiMessage);
-  socket.addEventListener("close", () => {
+  socket.addEventListener("close", (event) => {
+    if (intentionalDisconnect) {
+      intentionalDisconnect = false;
+      return;
+    }
+    const detail = event.reason ? `原因：${event.reason}` : `代码：${event.code}`;
+    if (!setupReady) {
+      enableRestFallback(`Live 连接被关闭，已切换到稳定文字模式。${detail}`);
+      return;
+    }
+    addBubble("system", "连接已断开", `Gemini 关闭了连接。${detail}`);
     setConnection("未连接", false);
     socket = null;
     setupReady = false;
+    apiMode = null;
   });
   socket.addEventListener("error", () => {
-    addBubble("system", "连接失败", "Gemini Live 连接没有成功。请检查 API key、模型名称和网络。");
-    setConnection("未连接", false);
+    enableRestFallback("Live 连接没有成功，已切换到稳定文字模式。");
   });
 }
 
 function disconnectGemini() {
+  intentionalDisconnect = true;
   if (socket) socket.close();
+  socket = null;
+  setupReady = false;
+  apiMode = null;
+  setConnection("未连接", false);
 }
 
 function setConnection(label, connected) {
@@ -155,6 +172,10 @@ function sendChildText(text) {
 
 function sendToGemini(text) {
   lastTeacherBubble = addBubble("teacher", "Sunny", "");
+  if (apiMode === "rest") {
+    sendRestMessage(text);
+    return;
+  }
   socket.send(
     JSON.stringify({
       realtimeInput: {
@@ -174,6 +195,7 @@ function handleGeminiMessage(event) {
 
   if (payload.setupComplete) {
     setupReady = true;
+    apiMode = "live";
     setConnection("已连接", true);
     addBubble("system", "连接成功", "Sunny 老师已经上线。点击“开始这一课”就可以练习。");
     return;
@@ -288,5 +310,58 @@ function addBubble(type, speaker, text) {
 }
 
 function isSocketReady() {
-  return setupReady && socket && socket.readyState === WebSocket.OPEN;
+  return apiMode === "rest" || (setupReady && socket && socket.readyState === WebSocket.OPEN);
+}
+
+function enableRestFallback(message) {
+  if (apiMode === "rest") return;
+  apiMode = "rest";
+  setupReady = false;
+  if (socket) {
+    socket.onclose = null;
+    socket.onerror = null;
+    socket.close();
+    socket = null;
+  }
+  setConnection("文字模式", true);
+  addBubble("system", "已连接", message);
+}
+
+async function sendRestMessage(text) {
+  const apiKey = apiKeyInput.value.trim();
+  const restModel = "gemini-2.5-flash";
+  try {
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${restModel}:generateContent?key=${encodeURIComponent(apiKey)}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          systemInstruction: {
+            parts: [{ text: buildSystemInstruction() }],
+          },
+          contents: [
+            {
+              role: "user",
+              parts: [{ text }],
+            },
+          ],
+          generationConfig: {
+            temperature: 0.8,
+          },
+        }),
+      },
+    );
+    const payload = await response.json();
+    if (!response.ok) {
+      throw new Error(payload.error?.message || "请求失败");
+    }
+    const answer = payload.candidates?.[0]?.content?.parts?.map((part) => part.text || "").join("") || "";
+    appendTeacherText(answer || "I am here. Let's try again!");
+  } catch (error) {
+    if (lastTeacherBubble) {
+      lastTeacherBubble.querySelector("p").textContent = "连接 Gemini 时出错了。请检查 API Key 是否正确。";
+    }
+    addBubble("system", "错误详情", error.message);
+  }
 }
