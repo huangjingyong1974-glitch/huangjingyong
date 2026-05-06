@@ -2,6 +2,7 @@ const apiKeyInput = document.querySelector("#apiKey");
 const modelInput = document.querySelector("#modelName");
 const connectBtn = document.querySelector("#connectBtn");
 const disconnectBtn = document.querySelector("#disconnectBtn");
+const resetBtn = document.querySelector("#resetBtn");
 const connectionState = document.querySelector("#connectionState");
 const modeButtons = [...document.querySelectorAll(".mode-card")];
 const childAgeInput = document.querySelector("#childAge");
@@ -79,7 +80,7 @@ let setupTimer = null;
 
 apiKeyInput.value = localStorage.getItem("geminiApiKey") || "";
 modelInput.value = localStorage.getItem("geminiModel") || modelInput.value;
-if (!isLiveModel(modelInput.value)) {
+if (modelInput.value.includes("gemini-3.1") || !isLiveModel(modelInput.value)) {
   modelInput.value = "gemini-2.5-flash-native-audio-preview-12-2025";
   localStorage.setItem("geminiModel", modelInput.value);
 }
@@ -99,6 +100,7 @@ updateLessonPlan();
 
 connectBtn.addEventListener("click", connectGemini);
 disconnectBtn.addEventListener("click", disconnectGemini);
+resetBtn.addEventListener("click", resetConnectionSettings);
 startLessonBtn.addEventListener("click", startLesson);
 
 form.addEventListener("submit", (event) => {
@@ -366,6 +368,13 @@ function isSocketReady() {
 
 function isLiveModel(model) {
   return /live|native-audio/.test(model);
+}
+
+function resetConnectionSettings() {
+  disconnectGemini();
+  modelInput.value = "gemini-2.5-flash-native-audio-preview-12-2025";
+  localStorage.setItem("geminiModel", modelInput.value);
+  addBubble("system", "已重置", "模型已换成当前 Live 默认模型。请重新点击“连接老师”。");
 }
 
 function updateLessonPlan() {
