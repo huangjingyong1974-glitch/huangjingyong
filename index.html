@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Sunny English Buddy</title>
+    <meta name="theme-color" content="#0f766e" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Sunny English" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="./icon.svg" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="hero" aria-label="英语陪练">
+        <div class="hero-art" aria-hidden="true">
+          <div class="sun"></div>
+          <div class="cloud cloud-a"></div>
+          <div class="cloud cloud-b"></div>
+          <div class="hill hill-a"></div>
+          <div class="hill hill-b"></div>
+        </div>
+        <div class="hero-copy">
+          <p class="eyebrow">中文母语孩子的英语老师</p>
+          <h1>Sunny English Buddy</h1>
+          <p>用温柔的英语对话、听力小挑战和单词复习，陪孩子每天开口说一点。</p>
+        </div>
+      </section>
+
+      <section class="control-panel" aria-label="设置">
+        <label class="field api-field">
+          <span>Gemini API Key</span>
+          <input id="apiKey" type="password" autocomplete="off" placeholder="粘贴你的 API key" />
+        </label>
+        <label class="field">
+          <span>模型</span>
+          <input id="modelName" type="text" value="gemini-2.0-flash-live-001" />
+        </label>
+        <button id="connectBtn" class="primary-btn" type="button">连接老师</button>
+        <button id="disconnectBtn" class="ghost-btn" type="button" disabled>断开</button>
+      </section>
+
+      <section class="lesson-grid">
+        <aside class="side-panel" aria-label="练习模式">
+          <div class="section-title">
+            <span>今日练习</span>
+            <strong id="connectionState">未连接</strong>
+          </div>
+          <div class="mode-list" role="tablist" aria-label="练习类型">
+            <button class="mode-card active" type="button" data-mode="chat">
+              <span class="mode-icon">Hi</span>
+              <span>
+                <strong>日常对话</strong>
+                <small>餐桌、学校、兴趣</small>
+              </span>
+            </button>
+            <button class="mode-card" type="button" data-mode="listening">
+              <span class="mode-icon">Ear</span>
+              <span>
+                <strong>听力理解</strong>
+                <small>短句、问题、选择</small>
+              </span>
+            </button>
+            <button class="mode-card" type="button" data-mode="words">
+              <span class="mode-icon">ABC</span>
+              <span>
+                <strong>单词记忆</strong>
+                <small>图片联想、造句</small>
+              </span>
+            </button>
+          </div>
+
+          <label class="field compact">
+            <span>孩子年龄</span>
+            <input id="childAge" type="number" min="3" max="14" value="7" />
+          </label>
+          <label class="field compact">
+            <span>难度</span>
+            <select id="level">
+              <option value="beginner">启蒙</option>
+              <option value="early" selected>初级</option>
+              <option value="confident">敢说</option>
+            </select>
+          </label>
+          <button id="startLessonBtn" class="wide-btn" type="button">开始这一课</button>
+        </aside>
+
+        <section class="teacher-panel" aria-label="老师对话区">
+          <div class="teacher-header">
+            <div>
+              <p id="lessonLabel">日常对话</p>
+              <h2 id="teacherTitle">今天想聊什么？</h2>
+            </div>
+            <div id="voiceMeter" class="voice-meter" aria-label="声音状态">
+              <span></span><span></span><span></span><span></span>
+            </div>
+          </div>
+
+          <div id="transcript" class="transcript" aria-live="polite">
+            <article class="bubble teacher">
+              <strong>Sunny</strong>
+              <p>你好！连接 Gemini 后，我会主要用简单英语跟孩子说话，必要时用中文解释。</p>
+            </article>
+          </div>
+
+          <form id="messageForm" class="composer">
+            <button id="micBtn" class="icon-btn" type="button" aria-label="按住说英语">Mic</button>
+            <input id="messageInput" type="text" placeholder="也可以打字：I like apples." autocomplete="off" />
+            <button class="send-btn" type="submit">发送</button>
+          </form>
+        </section>
+      </section>
+    </main>
+
+    <script src="./app.js" type="module"></script>
+  </body>
+</html>

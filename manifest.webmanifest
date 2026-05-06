@@ -1,0 +1,17 @@
+{
+  "name": "Sunny English Buddy",
+  "short_name": "Sunny English",
+  "description": "A gentle English practice app for Chinese-native children.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f6fbf9",
+  "theme_color": "#0f766e",
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

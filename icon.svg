@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="96" fill="#f6fbf9"/>
+  <circle cx="365" cy="138" r="64" fill="#ffd166"/>
+  <path d="M0 356c70-78 142-96 215-54 54 31 108 29 161-6 49-32 94-34 136-6v222H0Z" fill="#83c7a6"/>
+  <path d="M82 316c69-52 136-58 201-18 48 30 96 31 143 3 34-20 63-22 86-6v217H82Z" fill="#0f766e"/>
+  <text x="256" y="240" text-anchor="middle" font-family="Arial, sans-serif" font-size="112" font-weight="800" fill="#1f2933">Hi</text>
+</svg>
