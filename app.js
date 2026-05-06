@@ -6,6 +6,8 @@ const connectionState = document.querySelector("#connectionState");
 const modeButtons = [...document.querySelectorAll(".mode-card")];
 const childAgeInput = document.querySelector("#childAge");
 const levelInput = document.querySelector("#level");
+const sceneSelect = document.querySelector("#sceneSelect");
+const lessonPlan = document.querySelector("#lessonPlan");
 const startLessonBtn = document.querySelector("#startLessonBtn");
 const transcript = document.querySelector("#transcript");
 const form = document.querySelector("#messageForm");
@@ -39,6 +41,33 @@ const prompts = {
   },
 };
 
+const scenes = {
+  breakfast: {
+    title: "早餐时间",
+    goal: "会说想吃什么、喜欢什么。",
+    phrases: ["I want milk.", "I like eggs.", "Can I have bread?"],
+    words: ["milk", "egg", "bread", "banana", "hungry"],
+  },
+  school: {
+    title: "上学路上",
+    goal: "会说今天去学校、带了什么。",
+    phrases: ["I go to school.", "This is my bag.", "I have a pencil."],
+    words: ["school", "bag", "book", "pencil", "friend"],
+  },
+  shop: {
+    title: "小商店",
+    goal: "会说想买什么、颜色和数量。",
+    phrases: ["I want an apple.", "It is red.", "Two apples, please."],
+    words: ["apple", "water", "toy", "red", "two"],
+  },
+  bedtime: {
+    title: "睡前故事",
+    goal: "会说晚安、感受和简单故事词。",
+    phrases: ["I am sleepy.", "Good night.", "The moon is bright."],
+    words: ["moon", "star", "sleepy", "story", "night"],
+  },
+};
+
 let socket = null;
 let currentMode = "chat";
 let recognition = null;
@@ -63,6 +92,9 @@ modeButtons.forEach((button) => {
     teacherTitle.textContent = prompts[currentMode].title;
   });
 });
+
+sceneSelect.addEventListener("change", updateLessonPlan);
+updateLessonPlan();
 
 connectBtn.addEventListener("click", connectGemini);
 disconnectBtn.addEventListener("click", disconnectGemini);
@@ -97,9 +129,12 @@ function connectGemini() {
   socket.addEventListener("open", () => {
     socket.send(
       JSON.stringify({
-        config: {
+        setup: {
           model: `models/${model}`,
-          responseModalities: ["TEXT"],
+          generationConfig: {
+            responseModalities: ["AUDIO"],
+          },
+          outputAudioTranscription: {},
           systemInstruction: {
             parts: [
               {
@@ -153,7 +188,7 @@ function setConnection(label, connected) {
 
 function startLesson() {
   const modePrompt = prompts[currentMode].opener;
-  const starter = `${modePrompt}\nChild age: ${childAgeInput.value}. Level: ${levelInput.value}.`;
+  const starter = `${modePrompt}\n${lessonContext()}\nStart now with one short sentence and one question.`;
   if (isSocketReady()) {
     sendToGemini(starter);
   } else {
@@ -164,7 +199,7 @@ function startLesson() {
 function sendChildText(text) {
   addBubble("child", "孩子", text);
   if (isSocketReady()) {
-    sendToGemini(`The child says: "${text}". Reply as the English teacher.`);
+    sendToGemini(`The child says: "${text}". ${lessonContext()} Reply as the English teacher.`);
   } else {
     addBubble("system", "离线练习", "还没有连接 Gemini。我先记录孩子的话，连接后就能实时对话。");
   }
@@ -199,6 +234,10 @@ function handleGeminiMessage(event) {
     setConnection("已连接", true);
     addBubble("system", "连接成功", "Sunny 老师已经上线。点击“开始这一课”就可以练习。");
     return;
+  }
+
+  if (payload.goAway) {
+    addBubble("system", "Live 提醒", "Gemini Live 会话即将结束，可以断开后重新连接。");
   }
 
   const parts = payload.serverContent?.modelTurn?.parts || [];
@@ -285,17 +324,19 @@ Keep each reply short: 1-3 sentences.
 Correct gently by repeating the child's sentence in a better version.
 Never overwhelm the child. Ask one question at a time.
 Current lesson mode: ${prompts[currentMode].label}.
+${lessonContext()}
 `;
 }
 
 function localFallback(mode) {
+  const scene = scenes[sceneSelect.value];
   if (mode === "listening") {
-    return "Listen: The red bus is big.\nQuestion: What color is the bus?\nA. red  B. blue  C. green";
+    return `Listen: ${scene.phrases[0]}\nQuestion: Which word did you hear?\nA. ${scene.words[0]}  B. tiger  C. train`;
   }
   if (mode === "words") {
-    return "今天的 5 个词：apple 苹果, water 水, book 书, happy 开心, school 学校。\nCan you say: I have a book?";
+    return `今天的 5 个词：${scene.words.join(", ")}。\nCan you say: ${scene.phrases[0]}`;
   }
-  return "Hi! What did you eat today? You can answer: I ate rice.";
+  return `Hi! ${scene.phrases[0]}\nCan you try?`;
 }
 
 function addBubble(type, speaker, text) {
@@ -311,6 +352,28 @@ function addBubble(type, speaker, text) {
 
 function isSocketReady() {
   return apiMode === "rest" || (setupReady && socket && socket.readyState === WebSocket.OPEN);
+}
+
+function updateLessonPlan() {
+  const scene = scenes[sceneSelect.value];
+  lessonPlan.innerHTML = `
+    <span><strong>${scene.title}</strong>：${scene.goal}</span>
+    <span>句型：${scene.phrases.join(" / ")}</span>
+    <span>单词：${scene.words.join(", ")}</span>
+  `;
+}
+
+function lessonContext() {
+  const scene = scenes[sceneSelect.value];
+  return `
+Lesson scene: ${scene.title}.
+Learning goal: ${scene.goal}
+Target phrases: ${scene.phrases.join(" | ")}
+Vocabulary: ${scene.words.join(", ")}
+Mode: ${prompts[currentMode].label}.
+Child age: ${childAgeInput.value}. Level: ${levelInput.value}.
+Use only this scene's target phrases and vocabulary unless the child asks for more.
+`;
 }
 
 function enableRestFallback(message) {

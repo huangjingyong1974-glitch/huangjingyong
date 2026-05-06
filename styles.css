@@ -328,6 +328,27 @@ button:disabled {
   margin-top: 12px;
 }
 
+.lesson-plan {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  color: #334155;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.lesson-plan strong {
+  color: var(--ink);
+}
+
+.lesson-plan span {
+  display: block;
+}
+
 .wide-btn {
   width: 100%;
   margin-top: 16px;
