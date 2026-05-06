@@ -10,7 +10,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <link rel="manifest" href="./manifest.webmanifest" />
     <link rel="apple-touch-icon" href="./icon.svg" />
-    <link rel="stylesheet" href="./styles.css?v=live-setup-v5" />
+    <link rel="stylesheet" href="./styles.css?v=live-model-v6" />
   </head>
   <body>
     <main class="app-shell">
@@ -36,7 +36,12 @@
         </label>
         <label class="field">
           <span>模型</span>
-          <input id="modelName" type="text" value="gemini-3.1-flash-live-preview" />
+          <input id="modelName" type="text" value="gemini-2.5-flash-native-audio-preview-12-2025" list="modelOptions" />
+          <datalist id="modelOptions">
+            <option value="gemini-2.5-flash-native-audio-preview-12-2025"></option>
+            <option value="gemini-2.5-flash-native-audio-preview-09-2025"></option>
+            <option value="gemini-2.0-flash-live-001"></option>
+          </datalist>
         </label>
         <button id="connectBtn" class="primary-btn" type="button">连接老师</button>
         <button id="disconnectBtn" class="ghost-btn" type="button" disabled>断开</button>
@@ -124,6 +129,6 @@
       </section>
     </main>
 
-    <script src="./app.js?v=live-setup-v5" type="module"></script>
+    <script src="./app.js?v=live-model-v6" type="module"></script>
   </body>
 </html>

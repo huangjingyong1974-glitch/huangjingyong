@@ -1,9 +1,9 @@
-const CACHE_NAME = "sunny-english-v5";
+const CACHE_NAME = "sunny-english-v6";
 const APP_FILES = [
   "./",
   "./index.html",
-  "./styles.css?v=live-setup-v5",
-  "./app.js?v=live-setup-v5",
+  "./styles.css?v=live-model-v6",
+  "./app.js?v=live-model-v6",
   "./manifest.webmanifest",
   "./icon.svg",
 ];

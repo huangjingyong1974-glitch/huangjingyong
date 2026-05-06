@@ -75,11 +75,12 @@ let lastTeacherBubble = null;
 let setupReady = false;
 let apiMode = null;
 let intentionalDisconnect = false;
+let setupTimer = null;
 
 apiKeyInput.value = localStorage.getItem("geminiApiKey") || "";
 modelInput.value = localStorage.getItem("geminiModel") || modelInput.value;
-if (modelInput.value === "gemini-2.0-flash-live-001") {
-  modelInput.value = "gemini-3.1-flash-live-preview";
+if (!isLiveModel(modelInput.value)) {
+  modelInput.value = "gemini-2.5-flash-native-audio-preview-12-2025";
   localStorage.setItem("geminiModel", modelInput.value);
 }
 
@@ -146,10 +147,16 @@ function connectGemini() {
       }),
     );
     setConnection("配置中", true);
+    setupTimer = window.setTimeout(() => {
+      if (!setupReady) {
+        enableRestFallback("Live 配置等待超时，已切换到稳定文字模式。通常是模型名或当前 API key 的 Live 权限不支持。");
+      }
+    }, 8000);
   });
 
   socket.addEventListener("message", handleGeminiMessage);
   socket.addEventListener("close", (event) => {
+    window.clearTimeout(setupTimer);
     if (intentionalDisconnect) {
       intentionalDisconnect = false;
       return;
@@ -166,6 +173,7 @@ function connectGemini() {
     apiMode = null;
   });
   socket.addEventListener("error", () => {
+    window.clearTimeout(setupTimer);
     enableRestFallback("Live 连接没有成功，已切换到稳定文字模式。");
   });
 }
@@ -173,6 +181,7 @@ function connectGemini() {
 function disconnectGemini() {
   intentionalDisconnect = true;
   if (socket) socket.close();
+  window.clearTimeout(setupTimer);
   socket = null;
   setupReady = false;
   apiMode = null;
@@ -229,6 +238,7 @@ function handleGeminiMessage(event) {
   }
 
   if (payload.setupComplete) {
+    window.clearTimeout(setupTimer);
     setupReady = true;
     apiMode = "live";
     setConnection("已连接", true);
@@ -352,6 +362,10 @@ function addBubble(type, speaker, text) {
 
 function isSocketReady() {
   return apiMode === "rest" || (setupReady && socket && socket.readyState === WebSocket.OPEN);
+}
+
+function isLiveModel(model) {
+  return /live|native-audio/.test(model);
 }
 
 function updateLessonPlan() {
