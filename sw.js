@@ -1,4 +1,4 @@
-const CACHE_NAME = "sunny-english-v1";
+const CACHE_NAME = "sunny-english-v2";
 const APP_FILES = ["./", "./index.html", "./styles.css", "./app.js", "./manifest.webmanifest", "./icon.svg"];
 
 self.addEventListener("install", (event) => {

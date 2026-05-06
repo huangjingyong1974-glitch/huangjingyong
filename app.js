@@ -47,6 +47,10 @@ let setupReady = false;
 
 apiKeyInput.value = localStorage.getItem("geminiApiKey") || "";
 modelInput.value = localStorage.getItem("geminiModel") || modelInput.value;
+if (modelInput.value === "gemini-2.0-flash-live-001") {
+  modelInput.value = "gemini-3.1-flash-live-preview";
+  localStorage.setItem("geminiModel", modelInput.value);
+}
 
 modeButtons.forEach((button) => {
   button.addEventListener("click", () => {
@@ -90,12 +94,10 @@ function connectGemini() {
   socket.addEventListener("open", () => {
     socket.send(
       JSON.stringify({
-        setup: {
+        config: {
           model: `models/${model}`,
-          generationConfig: {
-            responseModalities: ["TEXT"],
-            temperature: 0.8,
-          },
+          responseModalities: ["AUDIO"],
+          outputAudioTranscription: {},
           systemInstruction: {
             parts: [
               {
@@ -155,14 +157,8 @@ function sendToGemini(text) {
   lastTeacherBubble = addBubble("teacher", "Sunny", "");
   socket.send(
     JSON.stringify({
-      clientContent: {
-        turns: [
-          {
-            role: "user",
-            parts: [{ text }],
-          },
-        ],
-        turnComplete: true,
+      realtimeInput: {
+        text,
       },
     }),
   );
@@ -185,8 +181,15 @@ function handleGeminiMessage(event) {
 
   const parts = payload.serverContent?.modelTurn?.parts || [];
   const text = parts.map((part) => part.text || "").join("");
+  const outputTranscription = payload.serverContent?.outputTranscription?.text || "";
   if (text) {
     appendTeacherText(text);
+  }
+  if (outputTranscription) {
+    appendTeacherText(outputTranscription);
+  }
+  if (payload.serverContent?.turnComplete) {
+    lastTeacherBubble = null;
   }
 }
 
